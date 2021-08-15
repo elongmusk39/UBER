@@ -124,9 +124,9 @@ class LoginController: UIViewController {
             
             print("DEBUG: successfully log user \(emailText) in")
             
-            //call out the func configureUI to load the map view when we dismiss this VC
+            //call out the func configure() to load the map view and fetch all the data when we dismiss this VC
             guard let controller = UIApplication.shared.keyWindow?.rootViewController as? HomeController else { return }
-            controller.configureUI()
+            controller.configure()
             self.dismiss(animated: true, completion: nil)
         }
     }

@@ -6,18 +6,31 @@
 //
 
 import UIKit
+import CoreLocation
+
+enum AccountType: Int {
+    case passenger
+    case driver
+}
 
 struct User {
     let email: String
     let fullname: String
-    let accountType: String
+    var accountType: AccountType!
     let pass: String
+    var location: CLLocation?
+    let uid: String
+    
     
     //we create the "dictionary" to store all fetched data
-    init(dictionary: [String: Any]) {
+    init(uid: String, dictionary: [String: Any]) {
+        self.uid = uid
         self.fullname = dictionary["fullname"] as? String ?? ""
         self.email = dictionary["email"] as? String ?? ""
-        self.accountType = dictionary["accountType"] as? String ?? ""
         self.pass = dictionary["password"] as? String ?? ""
+        
+        if let index = dictionary["accountType"] as? Int {
+            self.accountType = AccountType(rawValue: index)
+        }
     }
 }

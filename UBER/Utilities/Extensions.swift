@@ -6,6 +6,8 @@
 //
 
 import UIKit
+import CoreLocation
+import MapKit
 
 //MARK: - Layouts
 
@@ -189,4 +191,104 @@ extension UITextField {
         tf.attributedPlaceholder = NSAttributedString(string: holder, attributes: [NSAttributedString.Key.foregroundColor : UIColor.lightGray])
         return tf
     }
+}
+
+
+//MARK: - extension MKPlacemark
+
+extension MKPlacemark {
+    
+    //let's construct the addres
+    var address: String? {
+        get {
+            guard let subThoroughFare = subThoroughfare else { return nil}
+            guard let thoroughFare = thoroughfare else { return nil}
+            guard let locality = locality else { return nil}
+            guard let adminArea = administrativeArea else { return nil}
+            
+            let addressContruct = "\(subThoroughFare), \(thoroughFare), \(locality), \(adminArea)"
+            return addressContruct
+        }
+    }
+}
+
+
+//MARK: - extension MKMapView
+
+extension MKMapView {
+    func zoomToFit(annotations: [MKAnnotation]) {
+        var zoomRect = MKMapRect.null
+        
+        annotations.forEach { anno in
+            let annotationPoint = MKMapPoint(anno.coordinate)
+            let pointRect = MKMapRect(x: annotationPoint.x, y: annotationPoint.y, width: 0.01, height: 0.01)
+            zoomRect = zoomRect.union(pointRect)
+            
+        }
+        let insets = UIEdgeInsets(top: 100, left: 100, bottom: 250, right: 100)
+        setVisibleMapRect(zoomRect, edgePadding: insets, animated: true)
+    }
+    
+    
+}
+
+//let's show the loadingView of "finding driver"
+extension UIViewController {
+    //writing " = nil" to to provide default value equal nil
+    func showPresentLoadingView(_ present: Bool, message: String? = nil) {
+        if present {
+            let vw = UIView()
+            vw.frame = self.view.frame
+            vw.backgroundColor = .black
+            vw.alpha = 0
+            vw.tag = 1
+            
+            let indicator = UIActivityIndicatorView()
+            indicator.style = .whiteLarge
+            indicator.center = vw.center
+            
+            let lb = UILabel()
+            lb.text = message
+            lb.font = UIFont.systemFont(ofSize: 20)
+            lb.textColor = .white
+            lb.textAlignment = .center
+            lb.alpha = 0.87
+            
+            view.addSubview(vw)
+            vw.addSubview(indicator)
+            vw.addSubview(lb)
+            
+            lb.centerX(inView: view)
+            lb.anchor(top: indicator.bottomAnchor, paddingTop: 32)
+            
+            indicator.startAnimating()
+            
+            UIView.animate(withDuration: 0.3) {
+                vw.alpha = 0.7
+            }
+        } else {
+            view.subviews.forEach { subview in
+                if subview.tag == 1 {
+                    UIView.animate(withDuration: 0.3) {
+                        subview.alpha = 0
+                    } completion: { _ in
+                        subview.removeFromSuperview()
+                    }
+
+                }
+            }
+        }
+        
+        
+    }
+    
+    
+    func presentAlertController(withMessage text: String, withTitle: String) {
+        let alert = UIAlertController(title: withTitle, message: text, preferredStyle: .alert)
+        let action = UIAlertAction(title: "OK", style: .cancel, handler: nil)
+        alert.addAction(action)
+        present(alert, animated: true, completion: nil)
+    }
+    
+    
 }

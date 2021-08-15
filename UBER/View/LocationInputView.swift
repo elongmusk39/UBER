@@ -9,6 +9,7 @@ import UIKit
 
 protocol LocationInputViewDelegate: class {
     func dismissLocationInputView()
+    func executeSearch(searchFor: String)
 }
 
 class LocationInputView: UIView {
@@ -67,7 +68,7 @@ class LocationInputView: UIView {
     
     //MARK: - TextField
     
-    //in order for the text not slushed to the left, we add a padding view, this is why we need it as "lazy var", since the paading view is not availble by default, gotta add it
+    //in order for the text not slushed to the left, we add a padding view and tf.delegate = self, this is why we need it as "lazy var", since the paading view is not availble by default, gotta add it
     private lazy var startingLocationTextField: UITextField = {
         let tf = UITextField()
         tf.placeholder = "Current location"
@@ -89,6 +90,7 @@ class LocationInputView: UIView {
         tf.backgroundColor = .lightGray
         tf.returnKeyType = .search
         tf.font = UIFont.systemFont(ofSize: 16)
+        tf.delegate = self
         
         let paddingView = UIView()
         paddingView.setDimensions(height: 30, width: 8)
@@ -147,3 +149,20 @@ class LocationInputView: UIView {
     
     
 }
+
+//MARK: - extension textField
+extension LocationInputView: UITextFieldDelegate {
+    
+    //this func dictates what happens when we hit "enter" on the keyboard
+    func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        guard let query = textField.text else {
+            return false
+        }
+        
+        delegate?.executeSearch(searchFor: query)
+        return true
+    }
+}
+
+
+

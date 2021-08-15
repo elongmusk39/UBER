@@ -13,6 +13,8 @@ class SignUpController: UIViewController {
     
 //MARK: - Properties
     
+    private var locationNow = LocationHandler.shared.locationManager.location
+    
     private let titleLabel: UILabel = {
         let lb = UILabel()
         lb.text = "UBER"
@@ -45,8 +47,6 @@ class SignUpController: UIViewController {
         let imagePict = UIImage(systemName: "person.crop.square")
         return UIView().inputContainerView(image: imagePict!, segmentedControl: segment)
     }()
-    
-    
     
     
     
@@ -109,6 +109,7 @@ class SignUpController: UIViewController {
         super.viewDidLoad()
         
         configureUI()
+        
     }
     
     
@@ -142,6 +143,25 @@ class SignUpController: UIViewController {
         dontHaveAccountButton.centerX(inView: view)
     }
     
+    func uploadUserDataAndShowHomeVC(userID: String, email: String, values: [String: Any]) {
+        //after the code run smoothly, then the completion block executes
+        REF_USERS.child(userID).updateChildValues(values) { (error, ref) in
+            
+            guard error == nil else {
+                print("DEBUG: we got error signing up")
+                return
+            }
+            
+            print("DEBUG: successfully register user \(email)")
+            
+            //call out the func configureUI to load the map view when we dismiss this VC
+            guard let controller = UIApplication.shared.keyWindow?.rootViewController as? HomeController else { return }
+            controller.configure()
+            self.dismiss(animated: true, completion: nil)
+        }
+        
+    }
+    
 //MARK: - Actions
     
     @objc func handleShowLogIn() {
@@ -152,14 +172,7 @@ class SignUpController: UIViewController {
         guard let emailText = emailTextField.text else { return }
         guard let passText = passwordTextField.text else { return }
         guard let fullnameText = fullnameTextField.text else { return }
-        let accountTypeIndex = segment.selectedSegmentIndex
-        
-        var nameAccountType = ""
-        if accountTypeIndex == 0 {
-            nameAccountType = "Passenger"
-        } else if accountTypeIndex == 1 {
-            nameAccountType = "Driver"
-        }
+        let accountType = segment.selectedSegmentIndex
         
         //so we are using Realtime Database, which means that we need the "databaseURL". go on to "GoogleService-Info.plit", add "DATABASE_URL" and paste its value of url from realtime database
         Auth.auth().createUser(withEmail: emailText, password: passText) { (result, error) in
@@ -171,36 +184,29 @@ class SignUpController: UIViewController {
             
             guard let uid = result?.user.uid else { return }
             
-            
-            //if user is a driver, we need to get his location
-            if accountTypeIndex == 1 {
-                var geoFire = GeoFire(firebaseRef: REF_DRIVER_LOCATIONS)
-//                geoFire.setLocation(location, forKey: uid) { error in
-//                    <#code#>
-//                }
-            }
-            
-            
-            let values = ["email": emailText,
+            let data = ["email": emailText,
                           "fullname": fullnameText,
                           "password": passText,
-                          "accountType": nameAccountType]
+                          "accountType": accountType] as [String : Any]
             
-            //after the code run smoothly, then the completion block executes
-            REF_USERS.child(uid).updateChildValues(values) { (error, ref) in
+            //if user is a driver, we need to get his location
+            if accountType == 1 {
+                let geoFire = GeoFire(firebaseRef: REF_DRIVER_LOCATIONS)
                 
-                guard error == nil else {
-                    print("DEBUG: we got error signing up")
+                guard let locationCurrent = self.locationNow else {
                     return
                 }
                 
-                print("DEBUG: successfully register user \(emailText)")
-                
-                //call out the func configureUI to load the map view when we dismiss this VC
-                guard let controller = UIApplication.shared.keyWindow?.rootViewController as? HomeController else { return }
-                controller.configureUI()
-                self.dismiss(animated: true, completion: nil)
+                geoFire.setLocation(locationCurrent, forKey: uid) { error in
+                    print("DEBUG: uploading as a driver")
+                    self.uploadUserDataAndShowHomeVC(userID: uid, email: emailText, values: data)
+                }
+            } else {
+                //move on if user is a passenger
+                print("DEBUG: uploading as a passenger")
+                self.uploadUserDataAndShowHomeVC(userID: uid, email: emailText, values: data)
             }
+            
         }
     }
     

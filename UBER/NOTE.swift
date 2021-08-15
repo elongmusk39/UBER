@@ -22,8 +22,8 @@
  -go to "info.plist", add "Privacy - Location Always Usage Description", then "Privacy - Location Always and When In Use Usage Description", and finally add "Privacy - Location When In Use Usage Description". we need all 3 keys for the simulator to work. In the real phone, we only need to access the location only when the app is opened
  -then go to "HomeController" and write out some code, use locationManager and implement some cases for it
  -complete all the UI shit, fetch user info and display it on the app
- 
- 
+ -remember to work with annotation, zoom in and out on the map
+ -
  
  
  
